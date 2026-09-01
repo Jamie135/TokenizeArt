@@ -49,17 +49,40 @@ The only lettering is the *Cross Coalition* caption and a small technical footer
 
 ## Pinning to IPFS
 
-1. Upload `42berry-cross-coalition.jpg` to an IPFS pinning service, then note its CID.
-2. In `metadata.json`, replace `REPLACE_WITH_IMAGE_CID` with that CID and
-   `REPLACE_WITH_42_LOGIN` with the 42 login (both `artist` and the `Artist` trait).
-3. Upload the edited `metadata.json`, and note *its* CID.
-4. Mint with the metadata URI:
+Two files go on IPFS, in this order: the JPEG first, because the metadata has to name the
+image's CID, and the metadata second, because its own CID has to cover that edit. Pinning
+them the other way round produces a descriptor that points at nothing.
+
+`pin.sh` drives the whole sequence. With a [Pinata](https://pinata.cloud) API key:
+
+```bash
+export PINATA_JWT=...          # Pinata dashboard -> API Keys -> New Key
+./image/pin.sh upload
+```
+
+Or, if the files are uploaded by hand through any pinning service's web UI:
+
+```bash
+./image/pin.sh set-image <image CID>          # then upload the edited metadata.json
+./image/pin.sh record <image CID> <metadata CID>
+```
+
+Either path writes both CIDs to `deployment/ipfs.json` and fills them into the table in
+`deployment/README.md`. Confirm the pins are actually reachable from outside this machine
+before minting — this also checks that the pinned JSON points at the pinned image:
+
+```bash
+./image/pin.sh check
+```
+
+Then mint with the metadata URI:
 
 ```
 mint(<recipient address>, "ipfs://<metadata CID>")
 ```
 
-`tokenURI(0)` then resolves to the JSON, which in turn points at the image.
+Token identifiers start at 1, so `tokenURI(1)` resolves to the JSON for the first artwork,
+which in turn points at the image.
 
 ## Regenerating the artwork
 

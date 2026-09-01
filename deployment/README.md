@@ -7,6 +7,24 @@ This guide provides instructions on how to deploy and interact with the smart co
 0x7B5269f932A381B4CB034A7ECf160E77271D1528
 ```
 
+## IPFS
+
+The artwork and its ERC-721 descriptor are pinned on IPFS; the contract stores only the
+metadata URI. `deployment/ipfs.json` holds the same values in machine-readable form.
+
+| | CID | Gateway |
+|---|---|---|
+| Artwork (JPEG) | `<IMAGE_CID>` | [view](https://ipfs.io/ipfs/<IMAGE_CID>) |
+| Metadata (JSON) | `<METADATA_CID>` | [view](https://ipfs.io/ipfs/<METADATA_CID>) |
+
+Token URI passed to `mint`:
+
+```
+ipfs://<METADATA_CID>
+```
+
+Pinning and recording are handled by `image/pin.sh` — see `image/README.md`.
+
 ## Required Setups
 - [Remix IDE](https://remix.ethereum.org/)
 - [MetaMask Wallet](https://metamask.io/)
