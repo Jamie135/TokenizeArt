@@ -13,7 +13,9 @@ Web 3.0 is a decentralized network that represents the next phase of the interne
 
 ### Token
 
-The type of cryptocurrency that will be studied in this project is a Token.
+The type of cryptocurrency that will be studied in this project is a Token, and more
+specifically a *non-fungible* one: a token whose units are not interchangeable, each
+carrying its own identity and its own metadata.
 Unlike coins (e.g. Bitcoin, Ethereum) that operate on their own independent blockchain, Tokens use an existing blockchain to perform their wide-range functionalities that are managed by a smart contract.
 Coins are primarily used as a medium of exchange, data storage, or transaction payment. Whereas Tokens represent a variety of assets or utilities, such as digital assets, access to platform-specific services, or even voting rights within a decentralized application (dApp).
 
@@ -39,156 +41,135 @@ Blockchain is a type of distributed database designed to record, store, and tran
 
 ## Contract Overview
 
-**42Berry (42B)** is an ERC20-compliant token built on the Ethereum blockchain using OpenZeppelin libraries. 
-This token represents a bounty system inspired by the anime One Piece, offering some basic operations such as bounty increase, bounty decrease and bounty transfering. We will consider that the value of one 42B token is equal to one million berries from the One Piece verse.
+**42Berry (42B)** is an ERC-721 non-fungible token collection on Ethereum, built on the
+OpenZeppelin libraries. It holds a single artwork, *Cross Coalition*, drawn from scratch
+and pinned to IPFS; the contract stores only the URI of that pinned metadata. The
+collection is capped at 42 pieces, matching the school the artwork depicts.
 
 ## Contract Structure
 
 ### Imports:
 
-The contract uses OpenZeppelin libraries to ensure security, reliability, and simplicity:
-
-- **ERC20**: Provides the standard ERC20 functionality for fungible tokens.
-- **Ownable**: Allows for ownership management, restricting certain functions to the owner of the contract.
-
-### Rank Mapping:
-
-The rank will determine the scale of the bounty to increase or decrease, the contract will map them to an integer:
-
-- STAR (mapped to 0)
-- CROWN (mapped to 1)
+- **ERC721URIStorage**: the ERC-721 standard plus a per-token metadata URI, so every token points at its own JSON descriptor on IPFS instead of sharing a collection-wide base URI.
+- **Ownable**: ownership management, restricting minting to the owner of the contract.
 
 ```solidity
-enum Rank {
-    STAR,
-    CROWN
-}
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 ```
+
+The contract identifier is `Berry42` rather than `42Berry` because a Solidity identifier
+cannot begin with a digit; the token itself is still named "42Berry".
+
+### State:
+
+```solidity
+uint256 private _nextTokenId = 1;
+uint256 public constant MAX_SUPPLY = 42;
+```
+
+`_nextTokenId` starts at 1 rather than 0 so the on-chain identifier matches the edition
+number printed on the artwork: token 1 is "42Berry #1", edition 1 of 42. `MAX_SUPPLY` is
+`constant`, so the cap is fixed at compile time and cannot be raised afterwards, not even
+by the owner.
 
 ### Constructor:
 
-The contract's constructor initializes the ERC20 token with:
-- **Name**: "42Berry"
-- **Symbol**: "42B"
-- The contract sets the `msg.sender` as the owner during deployment using `Ownable`.
-- The contract also call the `_mint()` method from OpenZeppelin to mint `initialSupply` amount of tokens for the the contract owner
-
 ```solidity
-uint256 public initialSupply = 10000 * 10 ** 18;
-uint256 public constant maxBounty = 5000 * 10 ** 18;
-
-constructor() ERC20("42Berry", "42B") Ownable(msg.sender) {
-    _mint(msg.sender, initialSupply);
-}
+constructor() ERC721("42Berry", "42B") Ownable(msg.sender) {}
 ```
+
+The constructor initializes the collection with the name "42Berry" and symbol "42B", and
+sets the deploying address as owner. Nothing is minted here: an artwork can only be minted
+once its metadata has been pinned on IPFS and its URI is known.
 
 ### Functions:
 
-#### increaseBounty
+#### mint
 
-This function allows the contract owner to increase (mint) new tokens and assign them to a specified address.
-The amount of minted tokens will depends on the target's rank and tier.
+Mints a new artwork to the target address and binds it to its IPFS metadata. Restricted to
+the owner so that nobody else can inflate the collection. The supply check is inclusive
+because identifiers start at 1 — a strict `<` would cap the collection at 41 pieces.
 
 ```solidity
-function increaseBounty(address account, Rank rank, uint256 tier) public onlyOwner {
-    require(account != owner(), "Cannot increase bounty for the owner");
-    require(tier >= 1 && tier <= 5, "Invalid tier");
+function mint(address to, string memory metadataURI) public onlyOwner returns (uint256) {
+    require(to != address(0), "Cannot mint to the zero address");
+    require(bytes(metadataURI).length > 0, "Metadata URI cannot be empty");
+    require(_nextTokenId <= MAX_SUPPLY, "Collection is sold out");
 
-    uint256 amount = calculateAmount(rank, tier);
-    require(balanceOf(account) + amount <= maxBounty, "Account bounty too high");
-    _mint(account, amount);
+    uint256 tokenId = _nextTokenId;
+    _nextTokenId++;
+
+    _safeMint(to, tokenId);
+    _setTokenURI(tokenId, metadataURI);
+
+    emit ArtworkMinted(to, tokenId, metadataURI);
+    return tokenId;
 }
 ```
 
-#### decreaseBounty
+`_safeMint` reverts when `to` is a contract that does not implement `onERC721Received`,
+which prevents the artwork from being locked forever inside a contract unable to transfer
+it. `_setTokenURI` writes the metadata URI permanently, which is why the URI must be
+verified as publicly resolvable before minting — see `image/README.md`.
 
-This function allows the contract owner to decrease (burn) a specified amount of tokens from a specified address.
-The amount of burned tokens will depends on the target's rank and tier.
+#### totalMinted
+
+Returns how many artworks have been minted so far. The counter is the identifier the
+*next* token will receive, and identifiers start at 1, so the number already minted is one
+less than the counter.
 
 ```solidity
-function decreaseBounty(address account, Rank rank, uint256 tier) public onlyOwner {
-    require(account != owner(), "Cannot decrease bounty for the owner");
-    require(tier >= 1 && tier <= 5, "Invalid tier");
-
-    uint256 amount = calculateAmount(rank, tier);
-    require(balanceOf(account) >= amount, "Account bounty too low");
-    _burn(account, amount);
+function totalMinted() public view returns (uint256) {
+    return _nextTokenId - 1;
 }
 ```
 
-#### claimBounty
+#### remainingSupply
 
-This function allows the contract owner to transfer tokens from his account to the bounty claimer, the amount of tokens transfered will be based on the bounty (balance) of the captured address.
-After the transfer, all tokens from the captured address will be burnt.
+Returns how many artworks can still be minted before the cap is reached. Derived from
+`totalMinted()` so that the two can never disagree.
 
 ```solidity
-function claimBounty(address claimer, address captured) public onlyOwner {
-    require(claimer != owner() && captured != owner(), "The owner cannot claim or be captured");
-    
-    uint256 capturedBalance = balanceOf(captured);
-    require(totalSupply() >= capturedBalance, "Insufficient total supply");
-
-    _transfer(msg.sender, claimer, capturedBalance);
-    _burn(captured, capturedBalance);
+function remainingSupply() public view returns (uint256) {
+    return MAX_SUPPLY - totalMinted();
 }
 ```
 
-#### negotiateHostage
-
-This function allows the contract owner to redeem all his claimed tokens with an additional 100.
+### Events:
 
 ```solidity
-function negotiateHostage() public onlyOwner {
-    uint256 currentSupply = initialSupply;
-    require(currentSupply > balanceOf(msg.sender), "No bounty has been claimed yet!");
-    
-    uint256 amount = currentSupply - balanceOf(msg.sender) + (100 * 10 ** 18);
-    _mint(msg.sender, amount);
-    initialSupply = balanceOf(msg.sender);
-}
+event ArtworkMinted(address indexed to, uint256 indexed tokenId, string metadataURI);
 ```
 
-#### calculateAmount
+Emitted after a successful mint, so a front-end or indexer can react to it without having
+to decode the generic ERC-721 `Transfer` event.
 
-This function calculates the amount of token based on the rank and the tier of the target.
+### ERC-721 Standard Functions
 
-```solidity
-function calculateAmount(Rank rank, uint256 tier) internal pure returns (uint256) {
-    uint256 baseAmount = 0;
-    if (rank == Rank.STAR) {
-        baseAmount = 100;
-    } else if (rank == Rank.CROWN) {
-        baseAmount = 1000;
-    }
-    return baseAmount * tier * 10 ** 18;
-}
-```
+Inherited from OpenZeppelin:
 
-### ERC20 Standard Functions 
-- approve: Allows owner to approve another address to spend tokens on their behalf.
-- renounceOwner: Renounce ownership.
-- transfer: Allows owner to transfer tokens to other addresses.
-- transferFrom: Allows approved addresses to transfer tokens on behalf of token holders.
--tranferOwnership: Transfer the ownership to another address.
-- allowance: Returns the amount of tokens that an address is allowed to spend on behalf of another address.
-- balanceOf: Returns the token balance of a specific address.
-- decimals: Returns the number of decimal places used for the token.
-- name: Returns the name of the token.
-- owner: Returns the owner address.
-- symbol: Returns the symbol of the token.
-- totalSupply: Returns the total supply of the token.
+- **tokenURI**: Returns the metadata URI of a given token, in the form `ipfs://<CID>`.
+- **ownerOf**: Returns the address that owns a given token.
+- **balanceOf**: Returns how many tokens an address owns.
+- **safeTransferFrom**: Transfers a token, refusing recipients that cannot handle ERC-721.
+- **transferFrom**: Transfers a token without that check.
+- **approve**: Allows another address to transfer a specific token.
+- **setApprovalForAll**: Allows an operator to transfer every token of the caller.
+- **getApproved** / **isApprovedForAll**: Query the approvals above.
+- **supportsInterface**: ERC-165 introspection; reports support for ERC-721 and its metadata extension.
+- **name** / **symbol**: Return "42Berry" and "42B".
+- **owner** / **transferOwnership** / **renounceOwnership**: Ownership management from `Ownable`.
 
 ---
 
 ## Additional Resources
 
-- [Contract Etherscan](https://sepolia.etherscan.io/address/0xC341Ae4d736087338a7B24F326a8A031DD4Cf00f)
-
 - [Blockchain Demo](https://andersbrownworth.com/blockchain/)
 
 - [Ethereum Converter](https://eth-converter.com/)
 
-- [OpenZeppelin Library](https://docs.openzeppelin.com/contracts/5.x/api/token/erc20#ERC20)
+- [OpenZeppelin ERC-721](https://docs.openzeppelin.com/contracts/5.x/api/token/erc721)
 
 ## Sepolia Faucets
 

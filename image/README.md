@@ -53,29 +53,37 @@ Two files go on IPFS, in this order: the JPEG first, because the metadata has to
 image's CID, and the metadata second, because its own CID has to cover that edit. Pinning
 them the other way round produces a descriptor that points at nothing.
 
-`pin.sh` drives the whole sequence. With a [Pinata](https://pinata.cloud) API key:
+Both are pinned on [Filebase](https://filebase.com) — create an IPFS bucket, upload the
+file, and the object's CID is shown in the console. Then hand the CIDs to `pin.sh`, which
+patches the metadata and records both in `deployment/ipfs.json` and the table in
+`deployment/README.md`:
 
 ```bash
-export PINATA_JWT=...          # Pinata dashboard -> API Keys -> New Key
-./image/pin.sh upload
-```
+# 1. upload 42berry-cross-coalition.jpg to the bucket, copy its CID, then run this command
+./image/pin.sh set-image <image CID>
 
-Or, if the files are uploaded by hand through any pinning service's web UI:
-
-```bash
-./image/pin.sh set-image <image CID>          # then upload the edited metadata.json
+# 2. upload the now-edited metadata.json, copy its CID, then run this command
 ./image/pin.sh record <image CID> <metadata CID>
 ```
 
-Either path writes both CIDs to `deployment/ipfs.json` and fills them into the table in
-`deployment/README.md`. Confirm the pins are actually reachable from outside this machine
-before minting — this also checks that the pinned JSON points at the pinned image:
+### Verifying before the mint
 
 ```bash
 ./image/pin.sh check
 ```
 
-Then mint with the metadata URI:
+This must print `OK - reachable from public IPFS`. It fetches both CIDs from ipfs.io,
+dweb.link and w3s.link — deliberately *not* the pinning provider's own gateway — and
+confirms the pinned metadata points at the pinned image.
+
+The distinction is not pedantic. A provider's own gateway serves your pins straight from
+its storage, so it answers `200` even when the content is not retrievable over IPFS
+proper; an earlier Pinata pin of this artwork resolved perfectly there while every public
+gateway timed out, `found 6 provider(s), connected to 5, but they did not return the
+requested content`. Since `_setTokenURI` is permanent, a token minted against a URI in
+that state could never be repaired. Only a pass from independent gateways rules it out.
+
+### Minting
 
 ```
 mint(<recipient address>, "ipfs://<metadata CID>")

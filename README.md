@@ -1,6 +1,9 @@
-# Tokenizer: 42Berry
+# TokenizeArt: 42Berry
 
-This project focuses on the creation and deployment of a personal token named 42Berry. It demonstrates some simple functionalities such as minting, burning, and transferring tokens within a bounty system.
+This project focuses on the creation and deployment of 42Berry (42B), a non-fungible token
+collection on Ethereum. A single artwork — *Cross Coalition* — is pinned to IPFS, 
+and minted as an ERC-721 whose on-chain metadata URI points at that pinned descriptor. 
+The collection is capped at 42 pieces.
 
 ## Project Implementation
 
@@ -35,20 +38,20 @@ Solidity is a popular programming language specifically designed for writing sma
 
 4. **Gas Optimization Techniques**: As gas fees are a crucial factor in Ethereum smart contract execution, Solidity has built-in features that allow for gas-efficient programming. Developers can write contracts that minimize execution costs by optimizing the number of computations and storage writes.
 
-### Standards: ERC-20
+### Standards: ERC-721
 
-ERC-20 is one of the most used fungible token standards on the Ethereum blockchain.
+ERC-721 is the standard for non-fungible tokens on Ethereum: every token is unique and
+individually owned, which is what distinguishes an artwork from a currency.
 
 **Advantages**:
 
-1. **Interoperability**: ERC-20 tokens are compatible with a wide range of wallets, exchanges, and dApps. This ensures that your token can be easily integrated and used across various platforms within the Ethereum ecosystem.
+1. **Uniqueness**: Each token has its own identifier and its own metadata URI. Two tokens are never interchangeable, which is precisely the property an artwork needs and a fungible balance cannot express.
 
-2. **Standardization**: ERC-20 provides a standardized set of rules for token creation and management. This simplifies the development process and ensures that all ERC-20 tokens behave in a predictable manner.
+2. **Per-token Metadata**: The `ERC721URIStorage` extension stores a metadata URI per token, so each piece points at its own descriptor on IPFS rather than sharing a collection-wide one.
 
-3. **Security**: The ERC-20 standard has been extensively tested, making it a secure choice for token development. Its well-defined rules help prevent common vulnerabilities and ensure the integrity of your token.
+3. **Ecosystem Support**: Wallets and marketplaces such as MetaMask and OpenSea read ERC-721 natively, resolving `tokenURI` and rendering the artwork without any bespoke integration.
 
-4. **Flexibility**: ERC-20 tokens can represent a wide range of assets and use cases, from utility tokens to stablecoins. This flexibility allows you to tailor your token to meet specific needs and objectives.
-
+4. **Safe Transfers**: `_safeMint` and `safeTransferFrom` refuse to send a token to a contract that cannot handle it, which prevents an artwork from being locked at an address forever.
 
 ### Wallet: MetaMask
 
@@ -94,13 +97,11 @@ Remix is a powerful IDE specifically designed for developing smart contracts on 
 
 ## Additional Resources
 
-- [Contract Etherscan](https://sepolia.etherscan.io/address/0xC341Ae4d736087338a7B24F326a8A031DD4Cf00f)
-
 - [Blockchain Demo](https://andersbrownworth.com/blockchain/)
 
 - [Ethereum Converter](https://eth-converter.com/)
 
-- [OpenZeppelin Library](https://docs.openzeppelin.com/contracts/5.x/api/token/erc20#ERC20)
+- [OpenZeppelin ERC-721](https://docs.openzeppelin.com/contracts/5.x/api/token/erc721)
 
 ## Sepolia Faucets
 
