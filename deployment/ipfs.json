@@ -1,0 +1,13 @@
+{
+  "image": {
+    "cid": "QmbqANbuYccExnQK7jfM6ey8xM6Df11LQ8h3sXT3RiEAMx",
+    "file": "image/42berry-cross-coalition.jpg",
+    "sha256": "7e181e3a31ce6989448884e12f35719db041c4257ab72422c4b36960b20b71f4"
+  },
+  "metadata": {
+    "cid": "QmV84K3R4LWjJr1xwBVNvgzsmnvnNgxUyRkHLohgNbraJa",
+    "file": "image/metadata.json"
+  },
+  "tokenURI": "ipfs://QmV84K3R4LWjJr1xwBVNvgzsmnvnNgxUyRkHLohgNbraJa",
+  "pinned_on": "2026-09-01"
+}
