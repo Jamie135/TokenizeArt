@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
-# Pin the artwork and its metadata to IPFS, then record both CIDs in the repo.
+# Record the artwork and its metadata CIDs in the repo, and verify they resolve.
 #
-#   ./image/pin.sh upload                    pin both files via Pinata (needs $PINATA_JWT)
-#   ./image/pin.sh set-image <CID>           point metadata.json at an already-pinned image
+#   ./image/pin.sh set-image <CID>               point metadata.json at the pinned image
 #   ./image/pin.sh record <IMG_CID> <META_CID>   write both CIDs into the repo
-#   ./image/pin.sh check                     verify the recorded CIDs resolve
-#   ./image/pin.sh status                    ask Pinata whether it holds them
+#   ./image/pin.sh check                         verify the recorded CIDs resolve
 #
-# The manual subcommands exist so the web UI of any pinning service works just as
-# well as the API: upload by hand, then hand the CIDs to set-image / record.
+# The two files are pinned on Filebase. Uploading is left to the provider's own console
+# or S3 API rather than reimplemented here, which keeps this script independent of any
+# one service: upload there, then hand the CIDs to set-image and record.
 
 set -euo pipefail
 
@@ -32,44 +31,6 @@ fi
 ROUNDS="${PIN_CHECK_ROUNDS:-3}"
 
 die() { echo "error: $*" >&2; exit 1; }
-
-# Upload one file to Pinata. Tries the current v3 files API first and falls back to
-# the legacy pinning endpoint, since which one an account can reach depends on when
-# it was created. Prints the bare CID on stdout; everything else goes to stderr.
-pin_file() {
-    local path="$1" response cid
-    [ -f "$path" ] || die "no such file: $path"
-    [ -n "${PINATA_JWT:-}" ] || die "PINATA_JWT is not set (Pinata dashboard -> API Keys)"
-
-    echo "uploading $(basename "$path") ($(stat -c %s "$path") bytes)..." >&2
-
-    # PIN_API=legacy skips v3 entirely. Worth reaching for when v3 returns a CID that no
-    # public gateway can resolve: the legacy endpoint only ever pins to the public network,
-    # whereas a v3 upload that does not register as public is stored privately and is
-    # never advertised to IPFS, so the CID looks valid but resolves nowhere.
-    if [ "${PIN_API:-}" != "legacy" ]; then
-        response=$(curl -sS -X POST "https://uploads.pinata.cloud/v3/files" \
-            -H "Authorization: Bearer $PINATA_JWT" \
-            -F "network=public" -F "file=@$path" 2>/dev/null || true)
-        cid=$(printf '%s' "$response" | jq -r '.data.cid // empty' 2>/dev/null || true)
-
-        # A v3 response that says the file is private is a CID we must not record.
-        if [ -n "$cid" ] && [ "$(printf '%s' "$response" | jq -r '.data.network // "public"')" != "public" ]; then
-            echo "warning: v3 stored this privately, retrying on the legacy public endpoint" >&2
-            cid=""
-        fi
-    fi
-
-    if [ -z "$cid" ]; then
-        response=$(curl -sS -X POST "https://api.pinata.cloud/pinning/pinFileToIPFS" \
-            -H "Authorization: Bearer $PINATA_JWT" \
-            -F "file=@$path")
-        cid=$(printf '%s' "$response" | jq -r '.IpfsHash // empty')
-    fi
-
-    [ -n "$cid" ] || die "upload failed, service replied: $response"
-    echo "$cid"
-}
 
 # Rewrite only the image line, so the hand-aligned formatting of metadata.json survives.
 set_image() {
@@ -127,47 +88,128 @@ record() {
 # These are different questions: a provider's own gateway serves your pins straight
 # from that provider's storage, so it answers 200 even for content that was never advertised to
 # public IPFS. Stopping at the first success would hide exactly the failure that matters,
-# so every gateway in a round is tried. Sets PUBLIC_HIT=yes if a non-dedicated one answers.
-PUBLIC_HIT=no
+# so every gateway in a round is tried. The findings come back in globals and the body in a
+# file, not on stdout: read through $(...) the function would run in a subshell and every
+# flag it set would die with it, which is how the metadata half of the check used to end up
+# reporting the image's verdict. They are reset per CID for the same reason - one file being
+# reachable is no evidence about the other.
+PUBLIC_HIT=no      # a public gateway returned the assembled file
+BLOCK_HIT=no       # a public gateway returned the root block (see probe_block)
+RATE_LIMITED=no    # a gateway answered 429, i.e. refused to answer the question at all
+FETCH_BODY=""      # file holding the assembled content, when some gateway served it
+BLOCK_FILE=""      # the root block itself, kept for the metadata content check
+
+# Ask a gateway for the raw root block instead of the assembled file. Blocks come off a
+# cheaper path and are throttled far more loosely, so this usually answers while the file
+# path is handing out 429s. A 200 proves a public gateway located the block on the network,
+# which is what "is this pinned publicly" actually asks; it is weaker than a full fetch only
+# in that the later blocks of a multi-block file go unchecked.
+probe_block() {
+    local gw="$1" cid="$2" tmp code rc=1
+    tmp=$(mktemp)
+    code=$(curl -sSL -o "$tmp" -w '%{http_code}' --max-time 30 \
+        -H 'Accept: application/vnd.ipld.raw' "$gw/$cid?format=raw" 2>/dev/null || echo 000)
+    if [ "$code" = "200" ] && [ -s "$tmp" ]; then
+        rc=0
+        if [ "$gw" != "$DEDICATED_GW" ]; then BLOCK_HIT=yes; fi
+        if [ -z "$BLOCK_FILE" ]; then BLOCK_FILE=$(mktemp); cat "$tmp" > "$BLOCK_FILE"; fi
+    fi
+    rm -f "$tmp"
+    return $rc
+}
+
+# Recover a one-block file's bytes from the dag-pb node that wraps them. The wrapper is a
+# handful of framing bytes around the payload, so for JSON the payload is everything from
+# the first brace to the last. Best effort by design: anything larger than a single block
+# comes back as nonsense, the caller runs it past jq, and a failure only skips a check.
+block_json() {
+    LC_ALL=C sed -z 's/^[^{]*//; s/[^}]*$//' "$1" | tr -d '\000'
+}
+
+# Returns 0 if some gateway handed over the content, which is left in $FETCH_BODY.
 fetch_cid() {
-    local cid="$1" round gw code body saved=""
+    local cid="$1" round gw code body note
+    PUBLIC_HIT=no BLOCK_HIT=no RATE_LIMITED=no
+    rm -f "$FETCH_BODY" "$BLOCK_FILE"; FETCH_BODY="" BLOCK_FILE=""
     for ((round = 1; round <= ROUNDS; round++)); do
         for gw in "${GATEWAYS[@]}"; do
             body=$(mktemp)
             code=$(curl -sSL -o "$body" -w '%{http_code}' --max-time 30 "$gw/$cid" 2>/dev/null || echo 000)
-            echo "  $(echo "$gw" | cut -d/ -f3): HTTP $code" >&2
+            note=""
             if [ "$code" = "200" ]; then
-                [ -z "$saved" ] && { saved=$(mktemp); cat "$body" > "$saved"; }
-                [ "$gw" != "$DEDICATED_GW" ] && PUBLIC_HIT=yes
+                if [ -z "$FETCH_BODY" ]; then FETCH_BODY=$(mktemp); cat "$body" > "$FETCH_BODY"; fi
+                if [ "$gw" != "$DEDICATED_GW" ]; then PUBLIC_HIT=yes; fi
+            else
+                # 429 is the gateway refusing to serve *this machine*; it says nothing about
+                # whether the content is on IPFS. Any other failure is worth a second opinion
+                # too, so either way go ask the same gateway for the block instead.
+                if [ "$code" = "429" ]; then RATE_LIMITED=yes; fi
+                if probe_block "$gw" "$cid"; then note=" (raw block: ok)"; else note=" (raw block: no)"; fi
             fi
+            echo "  $(echo "$gw" | cut -d/ -f3): HTTP $code$note" >&2
             rm -f "$body"
         done
         # Nothing more to learn once the content is in hand and publicly reachable.
-        [ -n "$saved" ] && [ "$PUBLIC_HIT" = yes ] && break
-        [ "$round" -lt "$ROUNDS" ] && { echo "  round $round incomplete, waiting 30s..." >&2; sleep 30; }
+        if [ -n "$FETCH_BODY" ] && [ "$PUBLIC_HIT" = yes ]; then break; fi
+        # Nor once a rate limit is doing the answering: it will not lift within a 30s wait,
+        # and the block probes have already settled the question the file fetch could not.
+        if [ "$RATE_LIMITED" = yes ] && [ "$BLOCK_HIT" = yes ]; then break; fi
+        if [ "$round" -lt "$ROUNDS" ]; then echo "  round $round incomplete, waiting 30s..." >&2; sleep 30; fi
     done
-    [ -n "$saved" ] || return 1
-    cat "$saved"; rm -f "$saved"
+    [ -n "$FETCH_BODY" ]
 }
 
 check() {
     [ -f "$RECORD" ] || die "nothing recorded yet, run: $0 record <image CID> <metadata CID>"
-    local img meta remote
+    local img meta remote json="" img_any img_public img_block img_rl meta_public meta_block meta_rl
     img=$(jq -r .image.cid "$RECORD")
     meta=$(jq -r .metadata.cid "$RECORD")
 
     echo "image $img"
-    fetch_cid "$img" > /dev/null || die "image did not resolve anywhere; run '$0 status'"
+    if fetch_cid "$img"; then img_any=yes; else img_any=no; fi
+    img_public=$PUBLIC_HIT img_block=$BLOCK_HIT img_rl=$RATE_LIMITED
 
     echo "metadata $meta"
-    remote=$(fetch_cid "$meta") || die "metadata did not resolve anywhere; run '$0 status'"
+    fetch_cid "$meta" || true
+    meta_public=$PUBLIC_HIT meta_block=$BLOCK_HIT meta_rl=$RATE_LIMITED
+    if [ -n "$FETCH_BODY" ]; then
+        json=$(cat "$FETCH_BODY")
+    elif [ -n "$BLOCK_FILE" ]; then
+        # A throttled file fetch can still leave the root block in hand, and for a document
+        # this small that block *is* the whole JSON, so the content check need not be dropped.
+        json=$(block_json "$BLOCK_FILE")
+    fi
+    rm -f "$FETCH_BODY" "$BLOCK_FILE"; FETCH_BODY="" BLOCK_FILE=""
+
+    # "Rate-limited everywhere" and "nobody has this content" arrive as the same silence but
+    # mean opposite things, so a 429 sweep is reported as inconclusive rather than as failure.
+    if [ "$img_any" = no ] && [ "$img_block" = no ]; then
+        [ "$img_rl" = yes ] && die "image: every gateway answered 429 and no block probe got through; inconclusive, retry later"
+        die "image did not resolve anywhere; run '$0 status'"
+    fi
+    if [ -z "$json" ] && [ "$meta_block" = no ]; then
+        [ "$meta_rl" = yes ] && die "metadata: every gateway answered 429 and no block probe got through; inconclusive, retry later"
+        die "metadata did not resolve anywhere; run '$0 status'"
+    fi
 
     # The whole point of the two-file layout: the pinned JSON must point at the pinned image.
-    remote=$(printf '%s' "$remote" | jq -r '.image // "unreadable"')
-    [ "$remote" = "ipfs://$img" ] || die "pinned metadata says image=$remote, expected ipfs://$img"
-    echo "pinned metadata points at the pinned image"
+    if [ -n "$json" ] && printf '%s' "$json" | jq empty 2>/dev/null; then
+        remote=$(printf '%s' "$json" | jq -r '.image // "unreadable"')
+        [ "$remote" = "ipfs://$img" ] || die "pinned metadata says image=$remote, expected ipfs://$img"
+        echo "pinned metadata points at the pinned image"
+    else
+        echo "could not read the pinned metadata body back; content check skipped"
+    fi
 
-    if [ "$PUBLIC_HIT" = no ]; then
+    if [ "$img_public" = yes ] && [ "$meta_public" = yes ]; then
+        echo "OK - reachable from public IPFS"
+    elif { [ "$img_public" = yes ] || [ "$img_block" = yes ]; } &&
+         { [ "$meta_public" = yes ] || [ "$meta_block" = yes ]; }; then
+        echo "OK - independent public gateways served the blocks for both CIDs."
+        echo "The whole-file fetch was refused with HTTP 429, which is those gateways"
+        echo "throttling this machine, not a verdict on the content. Retry in an hour"
+        echo "for the stronger check, or run it from another network."
+    else
         echo
         echo "NOT SAFE TO MINT: only your provider's own gateway served this content."
         echo "No independent gateway could fetch it, so wallets, marketplaces and anyone"
@@ -176,41 +218,11 @@ check() {
         echo "provider will not fix it. Pin the files to a second service and re-record."
         return 1
     fi
-    echo "OK - reachable from public IPFS"
-}
-
-# Ask Pinata directly whether it holds these CIDs. This separates "not pinned" from
-# "pinned but not yet reachable through a public gateway", which look identical from outside.
-status() {
-    [ -f "$RECORD" ] || die "nothing recorded yet"
-    [ -n "${PINATA_JWT:-}" ] || die "PINATA_JWT is not set"
-    local cid
-    for cid in $(jq -r '.image.cid, .metadata.cid' "$RECORD"); do
-        echo "== $cid"
-        curl -sS -H "Authorization: Bearer $PINATA_JWT" \
-            "https://api.pinata.cloud/v3/files/public?cid=$cid" |
-            jq -r '.data.files[]? | "  v3 public: \(.name)  \(.size) bytes  created \(.created_at)"' 2>/dev/null
-        curl -sS -H "Authorization: Bearer $PINATA_JWT" \
-            "https://api.pinata.cloud/v3/files/private?cid=$cid" |
-            jq -r '.data.files[]? | "  v3 PRIVATE: \(.name)  \(.size) bytes - private files are not public on IPFS"' 2>/dev/null
-        curl -sS -H "Authorization: Bearer $PINATA_JWT" \
-            "https://api.pinata.cloud/data/pinList?status=pinned&hashContains=$cid" |
-            jq -r '.rows[]? | "  legacy pinned: \(.metadata.name // "-")  \(.size) bytes  \(.date_pinned)"' 2>/dev/null
-    done
 }
 
 case "${1:-}" in
-    upload)
-        img_cid=$(pin_file "$IMAGE")
-        echo "image CID: $img_cid"
-        set_image "$img_cid"
-        meta_cid=$(pin_file "$META")   # must happen after set_image: the CID covers the edit
-        echo "metadata CID: $meta_cid"
-        record "$img_cid" "$meta_cid"
-        ;;
     set-image) set_image "${2:-}" ;;
     record)    record "${2:-}" "${3:-}" ;;
     check)     check ;;
-    status)    status ;;
-    *) sed -n '2,11p' "${BASH_SOURCE[0]}" | sed 's/^# \?//'; exit 1 ;;
+    *) sed -n '2,10p' "${BASH_SOURCE[0]}" | sed 's/^# \?//'; exit 1 ;;
 esac
