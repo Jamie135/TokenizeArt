@@ -4,11 +4,21 @@ This guide provides instructions on how to deploy and interact with the smart co
 
 ## Contract Address
 
-Not yet deployed — fill this in with the address Remix reports after step 5 below.
+Deployed and minted on the **Sepolia** testnet (chain ID `11155111`).
 
 ```
-<deployed contract address>
+0x136e45c3c232E9699C841800a3b1b74525d085de
 ```
+
+| | |
+|---|---|
+| Contract | [`0x136e45c3…085de`](https://sepolia.etherscan.io/address/0x136e45c3c232E9699C841800a3b1b74525d085de) |
+| Owner / artist wallet | [`0xaf6e74C8…8905`](https://sepolia.etherscan.io/address/0xaf6e74C8071f0FE90BfCBB95360Fae9A0d788905) |
+| Token minted | `#1` — `ownerOf(1)` returns the owner wallet above |
+
+The contract address and the wallet address are different things: the wallet deployed the
+contract and owns token 1, while the contract is the collection itself. `ownerOf` is called
+on the contract.
 
 ## IPFS
 
