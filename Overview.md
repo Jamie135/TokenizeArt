@@ -150,6 +150,58 @@ That's the whole loop: pin the art → pin a description that names the art → 
 rulebook contract → deploy the rulebook onto the blockchain → mint one certificate that
 binds an owner to that description, forever.
 
+## 7. Is Sepolia "really" the blockchain, or just a practice sandbox?
+
+It's genuinely the blockchain — not a simulation running on someone's laptop. Sepolia is
+a real, public, decentralized network with its own validators, its own blocks, its own
+gas costs, and its own permanent history, and anyone in the world can look up 42Berry's
+contract on [Sepolia Etherscan](https://sepolia.etherscan.io/address/0x560f24b7c8A86B973261807689DB159890D712c5)
+right now. Once the deploy transaction is confirmed, the bytecode sits at that address
+forever, exactly the same way a mainnet contract would.
+
+The only things that make it a "testnet" rather than "the real thing":
+
+- Its ETH is free from a faucet and worthless outside of testing — nobody is spending
+  real money to mint or deploy here.
+- It exists specifically so mistakes are cheap. If `42Berry.sol` had a bug, redeploying
+  costs nothing but time.
+- Unlike mainnet, testnets are occasionally retired outright. Ethereum has shut down and
+  reset previous testnets before (Ropsten, Rinkeby, Kovan). If that ever happened to
+  Sepolia, this deployment and its minted token would disappear with it — the one
+  permanence guarantee mainnet has that a testnet doesn't.
+
+So "deployed to Sepolia" means the contract is truly, publicly on a blockchain today —
+just one whose long-term survival isn't guaranteed the way mainnet's is.
+
+## 8. Could someone else take our CID and mint it as their own NFT?
+
+This splits into two very different questions, and mixing them up is an easy mistake.
+
+**Can someone mint a second 42Berry token on *our* contract?** No. Look at
+[`code/42Berry.sol:32`](code/42Berry.sol#L32) — `mint` is guarded by `onlyOwner`, which
+checks that whoever is calling it is the wallet that deployed the contract
+(`0xaf6e74C8...`). If anyone else's wallet calls `mint` on `0x560f24b7...712c5`, the
+Ethereum Virtual Machine itself rejects the transaction before anything happens. This
+isn't a promise or a rule written in a README — it's enforced by the same code that runs
+on every validator, so there's no way around it without that private key.
+
+**Can someone copy our CID into a *different*, brand-new contract?** Yes, and nothing
+technical stops them. IPFS has no login or permissions — a CID like
+`ipfs://QmUHT1PRmpgkJ6v3cGeTgkbqLT6fV6ipPPhPoVQqpuZiiw` is public by design, that's the
+whole point of content-addressed storage. Anyone can fetch that image and metadata,
+deploy their own separate ERC-721 contract, and call *their* `mint` (which they'd own,
+so they're allowed to) with a token URI pointing at the exact same CID. This is the same
+thing as a "right-click save" copycat NFT that shows up on marketplaces sometimes.
+
+**Why that doesn't fake or devalue the original:** an NFT's authenticity was never based
+on the artwork data being secret — it's based on *provenance*: which contract, and which
+wallet minted it. A copycat lives at a different contract address, minted by a different
+wallet, and both facts are permanently visible on-chain. Anyone checking can compare that
+against the canonical details in [`README.md`](README.md) — contract `0x560f24b7...712c5`,
+owner `0xaf6e74C8...8905` — and immediately tell a clone from the original, no matter how
+identical the image looks. It's the same reason a photocopy of a signed print isn't the
+signed print, even pixel-for-pixel.
+
 ---
 
 See [`README.md`](README.md) for the project summary and live deployment details,
