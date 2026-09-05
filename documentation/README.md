@@ -97,7 +97,7 @@ uint256 public constant MAX_SUPPLY = 42;
 ```
 
 `_nextTokenId` starts at 1 rather than 0 so the on-chain identifier matches the edition
-number printed on the artwork: token 1 is "42Berry #1", edition 1 of 42. `MAX_SUPPLY` is
+number in the metadata: token 1 is "42Berry #1", edition 1 of 42. `MAX_SUPPLY` is
 `constant`, so the cap is fixed at compile time and cannot be raised afterwards, not even
 by the owner.
 

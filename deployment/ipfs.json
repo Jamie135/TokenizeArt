@@ -1,13 +1,13 @@
 {
   "image": {
-    "cid": "QmbqANbuYccExnQK7jfM6ey8xM6Df11LQ8h3sXT3RiEAMx",
+    "cid": "QmUHT1PRmpgkJ6v3cGeTgkbqLT6fV6ipPPhPoVQqpuZiiw",
     "file": "image/42berry-cross-coalition.jpg",
-    "sha256": "7e181e3a31ce6989448884e12f35719db041c4257ab72422c4b36960b20b71f4"
+    "sha256": "c2fde138ecc63e8fc2332511451e05011878f2d487969d9a201be447adb01681"
   },
   "metadata": {
-    "cid": "QmV84K3R4LWjJr1xwBVNvgzsmnvnNgxUyRkHLohgNbraJa",
+    "cid": "QmQmRopJrux4QDuXnXyk8qPJYwWmUYcA4kWYsESBjCBsy9",
     "file": "image/metadata.json"
   },
-  "tokenURI": "ipfs://QmV84K3R4LWjJr1xwBVNvgzsmnvnNgxUyRkHLohgNbraJa",
-  "pinned_on": "2026-09-01"
+  "tokenURI": "ipfs://QmQmRopJrux4QDuXnXyk8qPJYwWmUYcA4kWYsESBjCBsy9",
+  "pinned_on": "2026-09-05"
 }

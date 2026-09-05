@@ -13,8 +13,8 @@ The collection is capped at 42 pieces.
 | **Contract** | [`0x136e45c3c232E9699C841800a3b1b74525d085de`](https://sepolia.etherscan.io/address/0x136e45c3c232E9699C841800a3b1b74525d085de) |
 | **Standard** | ERC-721 (`ERC721URIStorage`, OpenZeppelin v5) |
 | **Owner** | [`0xaf6e74C8071f0FE90BfCBB95360Fae9A0d788905`](https://sepolia.etherscan.io/address/0xaf6e74C8071f0FE90BfCBB95360Fae9A0d788905) |
-| **Token URI** | `ipfs://QmV84K3R4LWjJr1xwBVNvgzsmnvnNgxUyRkHLohgNbraJa` |
-| **Artwork** | [`ipfs://QmbqANbu…iEAMx`](https://ipfs.io/ipfs/QmbqANbuYccExnQK7jfM6ey8xM6Df11LQ8h3sXT3RiEAMx) |
+| **Artwork** | [`ipfs://QmUHT1PRmpgkJ6v3cGeTgkbqLT6fV6ipPPhPoVQqpuZiiw`](https://ipfs.io/ipfs/QmUHT1PRmpgkJ6v3cGeTgkbqLT6fV6ipPPhPoVQqpuZiiw) |
+| **Token URI** | `ipfs://QmQmRopJrux4QDuXnXyk8qPJYwWmUYcA4kWYsESBjCBsy9` |
 
 Ownership is confirmed on-chain with `ownerOf(1)`, which returns the owner address above.
 See [`deployment/README.md`](deployment/README.md) for how to deploy, mint and verify.

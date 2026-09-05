@@ -32,15 +32,14 @@ recognisable on their own, and the poster reads as a crest rather than a billboa
 
 The rest of the styling carries the circus-poster language of the source: a big-top
 valance, a red sunburst behind the cross, and aged parchment inside a gold keyline.
-The only lettering is the *Cross Coalition* caption and a small technical footer.
+The only lettering is the *Cross Coalition* caption.
 
 ## Constraints from the subject, and how they are met
 
 - **The number 42 must be included and correctly displayed.** The centrepiece is the
   official 42 logo (from [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:42_Logo.svg)),
   drawn at true aspect ratio with no rotation, skew or occlusion. It is the largest element
-  on the poster. `42` also appears in the edition mark (*EDITION 1 / 42*, matching
-  `MAX_SUPPLY = 42` in the contract).
+  on the poster.
 - **No insulting terms or images.** The artwork contains only the 42 logo, the four
   coalition emblems, and decorative elements.
 - **Stored on distributed registry technology.** See *Pinning to IPFS* below.

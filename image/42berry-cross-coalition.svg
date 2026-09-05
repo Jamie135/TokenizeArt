@@ -103,8 +103,6 @@
 <path d="M 32,412.6 L 362.1,412.6 L 362.1,578 L 526.8,578 L 526.8,279.1 L 197.3,279.1 L 526.8,-51.1 L 362.1,-51.1 L 32,279.1 Z M 597.9,114.2 L 762.7,-51.1 L 597.9,-51.1 Z M 762.7,114.2 L 597.9,279.1 L 597.9,443.9 L 762.7,443.9 L 762.7,279.1 L 928,114.2 L 928,-51.1 L 762.7,-51.1 Z M 928,279.1 L 762.7,443.9 L 928,443.9 Z" fill="url(#gold)" stroke="#160406" stroke-width="34" stroke-linejoin="round" paint-order="stroke fill"/>
 </g>
 <text class="disp" x="800" y="1806" text-anchor="middle" font-size="54" letter-spacing="21" fill="url(#goldH)" stroke="#160406" stroke-width="11" paint-order="stroke fill">CROSS COALITION</text>
-<text class="sans" x="132" y="1896" font-size="25" letter-spacing="6" fill="#F3E7CE" opacity=".78">ERC-721 &#183; SEPOLIA</text>
-<text class="sans" x="1468" y="1896" text-anchor="end" font-size="25" letter-spacing="6" fill="#F3E7CE" opacity=".78">EDITION 1 / 42</text>
 <rect x="76" y="76" width="1448" height="1858" fill="url(#vig)"/>
 </g>
 <rect x="98" y="98" width="1404" height="1814" fill="none" stroke="#C99A2A" stroke-width="3.5" opacity="0.8"/>
@@ -113,6 +111,7 @@
 <rect x="1491" y="87" width="22" height="22" transform="rotate(45 1502 98)" fill="url(#gold)" stroke="#160406" stroke-width="3"/>
 <rect x="87" y="1901" width="22" height="22" transform="rotate(45 98 1912)" fill="url(#gold)" stroke="#160406" stroke-width="3"/>
 <rect x="1491" y="1901" width="22" height="22" transform="rotate(45 1502 1912)" fill="url(#gold)" stroke="#160406" stroke-width="3"/>
+<text class="disp" x="76" y="1978" font-size="30" letter-spacing="3" fill="url(#goldH)" stroke="#160406" stroke-width="4" paint-order="stroke fill" opacity=".9">42B</text>
 <rect x="76" y="76" width="1448" height="1858" rx="10" fill="none" stroke="#160406" stroke-width="7"/>
 <rect width="1600" height="2000" filter="url(#grain)" opacity=".13" style="mix-blend-mode:overlay"/>
 </svg>

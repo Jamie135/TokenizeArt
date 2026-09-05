@@ -28,13 +28,13 @@ in machine-readable form, and the table below is generated from it by `image/pin
 <!-- ipfs:begin -->
 | | CID | Gateway |
 |---|---|---|
-| Artwork (JPEG) | `QmbqANbuYccExnQK7jfM6ey8xM6Df11LQ8h3sXT3RiEAMx` | [view](https://ipfs.io/ipfs/QmbqANbuYccExnQK7jfM6ey8xM6Df11LQ8h3sXT3RiEAMx) |
-| Metadata (JSON) | `QmV84K3R4LWjJr1xwBVNvgzsmnvnNgxUyRkHLohgNbraJa` | [view](https://ipfs.io/ipfs/QmV84K3R4LWjJr1xwBVNvgzsmnvnNgxUyRkHLohgNbraJa) |
+| Artwork (JPEG) | `QmUHT1PRmpgkJ6v3cGeTgkbqLT6fV6ipPPhPoVQqpuZiiw` | [view](https://ipfs.io/ipfs/QmUHT1PRmpgkJ6v3cGeTgkbqLT6fV6ipPPhPoVQqpuZiiw) |
+| Metadata (JSON) | `QmQmRopJrux4QDuXnXyk8qPJYwWmUYcA4kWYsESBjCBsy9` | [view](https://ipfs.io/ipfs/QmQmRopJrux4QDuXnXyk8qPJYwWmUYcA4kWYsESBjCBsy9) |
 
 Token URI passed to `mint`:
 
 ```
-ipfs://QmV84K3R4LWjJr1xwBVNvgzsmnvnNgxUyRkHLohgNbraJa
+ipfs://QmQmRopJrux4QDuXnXyk8qPJYwWmUYcA4kWYsESBjCBsy9
 ```
 <!-- ipfs:end -->
 

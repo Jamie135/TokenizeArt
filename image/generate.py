@@ -227,12 +227,6 @@ add(f'<text class="disp" x="{CX}" y="1806" text-anchor="middle" font-size="54" '
     f'letter-spacing="21" fill="url(#goldH)" stroke="{INK}" stroke-width="11" '
     f'paint-order="stroke fill">CROSS COALITION</text>')
 
-# --------------------------------------------------------------- footer
-add(f'<text class="sans" x="{PX0+56}" y="1896" font-size="25" letter-spacing="6" '
-    f'fill="{CREAM}" opacity=".78">ERC-721 &#183; SEPOLIA</text>')
-add(f'<text class="sans" x="{PX1-56}" y="1896" text-anchor="end" font-size="25" '
-    f'letter-spacing="6" fill="{CREAM}" opacity=".78">EDITION 1 / 42</text>')
-
 # ------------------------------------------------------ vignette + grain
 add(f'<rect x="{PX0}" y="{PY0}" width="{PX1-PX0}" height="{PY1-PY0}" fill="url(#vig)"/>')
 add('</g>')  # /cpPanel
@@ -244,6 +238,11 @@ for ins, wdt, op in ((22, 3.5, .8), (32, 1.6, .45)):
 for qx, qy in ((PX0+22, PY0+22), (PX1-22, PY0+22), (PX0+22, PY1-22), (PX1-22, PY1-22)):
     add(f'<rect x="{qx-11}" y="{qy-11}" width="22" height="22" transform="rotate(45 {qx} {qy})" '
         f'fill="url(#gold)" stroke="{INK}" stroke-width="3"/>')
+
+# 42B collection mark, bottom-left of the paper margin
+add(f'<text class="disp" x="{PX0}" y="1978" font-size="30" letter-spacing="3" '
+    f'fill="url(#goldH)" stroke="{INK}" stroke-width="4" paint-order="stroke fill" '
+    f'opacity=".9">42B</text>')
 
 add(f'<rect x="{PX0}" y="{PY0}" width="{PX1-PX0}" height="{PY1-PY0}" rx="10" fill="none" '
     f'stroke="{INK}" stroke-width="7"/>')
