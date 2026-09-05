@@ -6,13 +6,12 @@ and minted as an ERC-721 whose on-chain metadata URI points at that pinned descr
 The collection is capped at 42 pieces.
 
 ## Deployment
-
 | | |
 |---|---|
 | **Network** | Sepolia testnet (chain ID `11155111`) |
-| **Contract** | [`0x136e45c3c232E9699C841800a3b1b74525d085de`](https://sepolia.etherscan.io/address/0x136e45c3c232E9699C841800a3b1b74525d085de) |
+| **Contract** | [`0x560f24b7…712c5`](https://sepolia.etherscan.io/address/0x560f24b7c8A86B973261807689DB159890D712c5) |
 | **Standard** | ERC-721 (`ERC721URIStorage`, OpenZeppelin v5) |
-| **Owner** | [`0xaf6e74C8071f0FE90BfCBB95360Fae9A0d788905`](https://sepolia.etherscan.io/address/0xaf6e74C8071f0FE90BfCBB95360Fae9A0d788905) |
+| **Owner** | [`0xaf6e74C8…8905`](https://sepolia.etherscan.io/address/0xaf6e74C8071f0FE90BfCBB95360Fae9A0d788905) |
 | **Artwork** | [`ipfs://QmUHT1PRmpgkJ6v3cGeTgkbqLT6fV6ipPPhPoVQqpuZiiw`](https://ipfs.io/ipfs/QmUHT1PRmpgkJ6v3cGeTgkbqLT6fV6ipPPhPoVQqpuZiiw) |
 | **Token URI** | `ipfs://QmQmRopJrux4QDuXnXyk8qPJYwWmUYcA4kWYsESBjCBsy9` |
 

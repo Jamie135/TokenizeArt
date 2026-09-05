@@ -7,12 +7,12 @@ This guide provides instructions on how to deploy and interact with the smart co
 Deployed and minted on the **Sepolia** testnet (chain ID `11155111`).
 
 ```
-0x136e45c3c232E9699C841800a3b1b74525d085de
+0x560f24b7c8A86B973261807689DB159890D712c5
 ```
 
 | | |
 |---|---|
-| Contract | [`0x136e45c3…085de`](https://sepolia.etherscan.io/address/0x136e45c3c232E9699C841800a3b1b74525d085de) |
+| Contract | [`0x560f24b7…712c5`](https://sepolia.etherscan.io/address/0x560f24b7c8A86B973261807689DB159890D712c5) |
 | Owner / artist wallet | [`0xaf6e74C8…8905`](https://sepolia.etherscan.io/address/0xaf6e74C8071f0FE90BfCBB95360Fae9A0d788905) |
 
 The contract address and the wallet address are different things: the wallet deployed the
