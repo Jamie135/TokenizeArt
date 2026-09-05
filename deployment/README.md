@@ -14,7 +14,6 @@ Deployed and minted on the **Sepolia** testnet (chain ID `11155111`).
 |---|---|
 | Contract | [`0x136e45c3…085de`](https://sepolia.etherscan.io/address/0x136e45c3c232E9699C841800a3b1b74525d085de) |
 | Owner / artist wallet | [`0xaf6e74C8…8905`](https://sepolia.etherscan.io/address/0xaf6e74C8071f0FE90BfCBB95360Fae9A0d788905) |
-| Token minted | `#1` — `ownerOf(1)` returns the owner wallet above |
 
 The contract address and the wallet address are different things: the wallet deployed the
 contract and owns token 1, while the contract is the collection itself. `ownerOf` is called
@@ -105,5 +104,7 @@ cannot exist before its metadata has a URI. Minting is a separate owner-only cal
 ## Sepolia Faucets
 
 - [Google Cloud Web3](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
+
+- [PoWFaucet] (https://faucets.pk910.de/)
 
 - [Chainlink](https://faucets.chain.link/sepolia)

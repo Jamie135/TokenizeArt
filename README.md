@@ -12,7 +12,6 @@ The collection is capped at 42 pieces.
 | **Network** | Sepolia testnet (chain ID `11155111`) |
 | **Contract** | [`0x136e45c3c232E9699C841800a3b1b74525d085de`](https://sepolia.etherscan.io/address/0x136e45c3c232E9699C841800a3b1b74525d085de) |
 | **Standard** | ERC-721 (`ERC721URIStorage`, OpenZeppelin v5) |
-| **Token minted** | `#1` — *42Berry #1 - Cross Coalition* |
 | **Owner** | [`0xaf6e74C8071f0FE90BfCBB95360Fae9A0d788905`](https://sepolia.etherscan.io/address/0xaf6e74C8071f0FE90BfCBB95360Fae9A0d788905) |
 | **Token URI** | `ipfs://QmV84K3R4LWjJr1xwBVNvgzsmnvnNgxUyRkHLohgNbraJa` |
 | **Artwork** | [`ipfs://QmbqANbu…iEAMx`](https://ipfs.io/ipfs/QmbqANbuYccExnQK7jfM6ey8xM6Df11LQ8h3sXT3RiEAMx) |
@@ -121,5 +120,7 @@ Remix is a powerful IDE specifically designed for developing smart contracts on 
 ## Sepolia Faucets
 
 - [Google Cloud Web3](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
+
+- [PoWFaucet] (https://faucets.pk910.de/)
 
 - [Chainlink](https://faucets.chain.link/sepolia)

@@ -46,6 +46,34 @@ OpenZeppelin libraries. It holds a single artwork, *Cross Coalition*, drawn from
 and pinned to IPFS; the contract stores only the URI of that pinned metadata. The
 collection is capped at 42 pieces, matching the school the artwork depicts.
 
+### What the token represents
+
+A 42Berry token is not the artwork itself, and it grants no licence to reproduce it — it
+is a tamper-proof certificate of ownership and provenance for one numbered edition of
+*Cross Coalition*. Up to 42 certificates can ever exist for this piece, each independently 
+tracked by `ERC721URIStorage` with its own owner and its own metadata URI, even though they 
+all point back to the same drawing. `mint` is restricted to the contract owner, so new editions 
+can only ever be issued by the project itself — nobody can mint themselves a copy. In the
+current deployment, only edition `#1` has actually been minted; see the
+[root README](../README.md#deployment) for its live token ID, owner and IPFS pointers.
+
+### How it will be used
+
+Once minted, a 42Berry token behaves like any standard ERC-721 asset. `ownerOf` proves
+who holds a given edition, `tokenURI` lets any wallet or marketplace resolve its metadata
+and render the artwork without bespoke integration, and `transferFrom` /
+`safeTransferFrom` let the holder sell, gift, or otherwise transfer that edition to
+someone else — the token never changes, only who holds it. In a wallet such as MetaMask,
+or on a marketplace such as OpenSea, this plays out as a normal NFT: the artwork displays,
+its coalition and edition attributes show from `metadata.json`, and trading it moves the
+on-chain certificate, not a copy of the file, which stays pinned on IPFS regardless of who
+owns the token.
+
+The token carries no further utility beyond that certificate — no access rights, no
+voting power, nothing gated behind holding it. Its purpose is the collectible itself: a
+verifiable, transferable claim to one numbered edition of *Cross Coalition*, permanently
+and publicly recorded on Ethereum.
+
 ## Contract Structure
 
 ### Imports:
@@ -174,5 +202,7 @@ Inherited from OpenZeppelin:
 ## Sepolia Faucets
 
 - [Google Cloud Web3](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
+
+- [PoWFaucet] (https://faucets.pk910.de/)
 
 - [Chainlink](https://faucets.chain.link/sepolia)
